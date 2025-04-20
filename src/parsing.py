@@ -1,7 +1,3 @@
-# DISCLAIMER:
-# This code is for theoretical/educational purposes only.
-# Do not use, share, or deploy this in any real-world application.
-
 import os
 import re
 from pprint import pprint

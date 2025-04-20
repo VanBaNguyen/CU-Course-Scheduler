@@ -1,12 +1,3 @@
-## ⚠️ Disclaimer
-
-## ⚠️ Disclaimer
-
-> See the [LICENSE](./LICENSE) file for full restrictions.
-
-By using this repository, you agree to these terms.
-
-
 # CU Course Schedule Optimizer
 
 Python Tool to create the most optimized schedule for CU students, at least the way I see it...
