@@ -1,0 +1,72 @@
+# DISCLAIMER:
+# This code is for theoretical/educational purposes only.
+# Do not use, share, or deploy this in any real-world application.
+
+import re
+from pprint import pprint
+import os
+
+def parse_input(wanted_courses):
+    # Store results
+    results = []  # Human-readable output
+    structured_results = []  # Final structured output
+
+# Get the absolute path to the input.txt file next to this script
+    base_dir = os.path.dirname(__file__)  # location of parsing.py
+    file_path = os.path.join(base_dir, "input.txt")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+
+        # Look for course code and section
+        match = re.search(r"(COMP \d{4})\s+([A-Z]+\d*)", line)
+        if match:
+            course_code = match.group(1)  # e.g., COMP 1005
+            section = match.group(2)      # e.g., A or A1
+
+            if course_code in wanted_courses:
+                # Check if section contains a number
+                has_number = bool(re.search(r"\d", section))
+
+                # Extract professor name
+                parts = line.split()
+                prof_name = " ".join(parts[-2:]) if len(parts) >= 2 else "Unknown"
+
+                # Get next line for schedule info
+                if i + 1 < len(lines):
+                    next_line = lines[i + 1].strip()
+
+                    # Extract Days and Time
+                    days_match = re.search(r"Days:\s*([A-Za-z ]+?)\s+Time:", next_line)
+                    time_match = re.search(r"Time:\s*([\d:APM\- ]+)", next_line)
+
+                    days = days_match.group(1).strip() if days_match else "Unknown"
+                    time = time_match.group(1).strip() if time_match else "Unknown"
+
+                    # Full course with section for display
+                    full_course_code = f"{course_code} {section}"
+                    formatted = f"{full_course_code} | {prof_name} | Days: {days} | Time: {time}"
+                    results.append(formatted)
+
+                    # Final structured result
+                    structured_results.append([
+                        has_number,
+                        course_code,
+                        section,
+                        prof_name,
+                        days,
+                        time
+                    ])
+
+            i += 3
+        else:
+            i += 1
+
+    # Optional: check structured results
+    pprint(structured_results)
+
+    return structured_results
