@@ -10,6 +10,7 @@ def parse_input(wanted_courses):
     # Store results
     results = []
     structured_results = []
+    seen_courses = set()
 
     # Get the absolute path to the input.txt file next to this script
     base_dir = os.path.dirname(__file__)  # location of parsing.py
@@ -27,6 +28,12 @@ def parse_input(wanted_courses):
         if match:
             course_code = match.group(1)  # e.g., COMP 1005
             section = match.group(2)      # e.g., A or A1
+
+            course_key = f"{course_code} {section}"
+            if course_key in seen_courses:
+                i += 1
+                continue
+            seen_courses.add(course_key)
 
             if course_code in wanted_courses:
                 # Check if section contains a number

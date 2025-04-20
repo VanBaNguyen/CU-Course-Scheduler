@@ -240,7 +240,7 @@ def optimize_schedule(course_list):
     best_schedule = scored[0][1]
     plot_schedule(best_schedule)
 
-AVOID_PROFS = {"", "Prof 2"}
+AVOID_PROFS = {"", ""}
 if __name__ == "__main__":
-    courses = parse_input({"COMP 2123", "COMP 3523", "MATH 2141"})
+    courses = parse_input({"COMP 1406", "COMP 1805", "MATH 2107"})
     optimize_schedule(courses)
