@@ -30,7 +30,7 @@ def parse_input(wanted_courses):
 
             if course_code in wanted_courses:
                 # Check if section contains a number
-                has_number = bool(re.search(r"\d", section))
+                has_number = bool(re.search(r"\d|T$", section))
 
                 # Extract professor name
                 parts = line.split()
