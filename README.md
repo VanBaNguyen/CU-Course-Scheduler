@@ -1,10 +1,8 @@
 ## ⚠️ Disclaimer
 
-This repository is intended **strictly for theoretical or educational purposes**.
+## ⚠️ Disclaimer
 
-- **Any form of reuse, reproduction, or distribution is strictly prohibited.** 
-- This repository is for academic viewing only.
-> See the LICENSE file for full restrictions.
+> See the [LICENSE](./LICENSE) file for full restrictions.
 
 By using this repository, you agree to these terms.
 
