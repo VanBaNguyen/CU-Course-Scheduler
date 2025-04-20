@@ -2,12 +2,13 @@
 # This code is for theoretical/educational purposes only.
 # Do not use, share, or deploy this in any real-world application.
 
-from datetime import datetime, time
-from itertools import combinations
-from parsing import parse_input
 import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from collections import defaultdict
+from datetime import datetime, time
+from itertools import combinations
+from parsing import parse_input
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
@@ -32,6 +33,10 @@ def parse_days(days_str):
 
 # Helper: Check for time conflict on the same day
 def times_overlap(slot1, slot2):
+    # If either slot is online, they can't conflict
+    if not slot1['start'] or not slot2['start']:
+        return False
+
     for day in slot1['days']:
         if day in slot2['days']:
             if not (slot1['end'] <= slot2['start'] or slot2['end'] <= slot1['start']):
@@ -43,13 +48,17 @@ def build_slots(course_list):
     slots = []
     for item in course_list:
         has_number, course_code, section, prof, days_str, time_str = item
-        if " - " not in time_str:
-            print(f"🛑 Bad time format: {time_str} (Course: {course_code} {section})")
-        start, end = parse_time_range(time_str)
-        if not start or not end:
-            print(f"⚠️  Skipping invalid time: {time_str} (Course: {course_code} {section})")
-            continue  # Skip this entry
-        days = parse_days(days_str)
+        if time_str.strip() == "Unknown":
+            start, end = None, None
+            days = []
+        else:
+            start, end = parse_time_range(time_str)
+            if not start or not end:
+                print(f"⚠️  Skipping invalid time: {time_str} (Course: {course_code} {section})")
+                continue  # Skip this entry
+            days = parse_days(days_str)
+
+
         slot = {
             'has_number': has_number,
             'course': course_code,
@@ -124,16 +133,18 @@ def generate_valid_schedules(course_groups):
 
     return valid_schedules
 
-
+# Score Formula: (#days * 1000) + total_gap_minutes + early class penalty + prof
+# Lower Score is better
 def score_schedule(schedule):
-    from collections import defaultdict
-
     daily_slots = defaultdict(list)
     early_penalty = 0
     total_gap_minutes = 0
     prof_penalty = 0
 
     for slot in schedule:
+        if not slot['start'] or not slot['end']:
+            continue
+
         if slot['start'].hour < 9:
             early_penalty += 20
 
@@ -166,27 +177,6 @@ def display_top_schedules(scored_schedules, top_n=3):
         for s in sorted(sched, key=lambda x: (x['days'], x['start'])):
             print(f"{s['course']} {s['section']} | {s['prof']} | Days: {' '.join(s['days'])} | Time: {s['start']} - {s['end']}")
 
-# Main function
-def optimize_schedule(course_list):
-    slots = build_slots(course_list)
-    course_groups = group_by_course(slots)
-    valid_schedules = generate_valid_schedules(course_groups)
-
-    if not valid_schedules:
-        print("No valid schedules found.")
-        print("Please check for conflicting class times or missing tutorials.")
-        return
-
-    # Score and sort
-    scored = [(score_schedule(sched), sched) for sched in valid_schedules]
-    scored.sort(key=lambda x: x[0])
-
-    # Show top 3
-    display_top_schedules(scored, top_n=3)
-
-    best_schedule = scored[0][1]
-    plot_schedule(best_schedule)
-AVOID_PROFS = {"Prof 1", "Prof 2"}
 def plot_schedule(schedule):
     fig, ax = plt.subplots(figsize=(10, 8))
 
@@ -202,6 +192,10 @@ def plot_schedule(schedule):
     ax.grid(True, linestyle='--', alpha=0.5)
 
     for slot in schedule:
+        # Skip online courses (no time data)
+        if not slot['start'] or not slot['end']:
+            continue
+
         course = f"{slot['course']} {slot['section']}"
         prof = slot['prof']
         start_hour = slot['start'].hour + slot['start'].minute / 60
@@ -224,6 +218,29 @@ def plot_schedule(schedule):
     plt.tight_layout()
     plt.show()
 
+# Main function
+def optimize_schedule(course_list):
+    slots = build_slots(course_list)
+    course_groups = group_by_course(slots)
+    valid_schedules = generate_valid_schedules(course_groups)
+
+    if not valid_schedules:
+        print("No valid schedules found.")
+        print("Please check for conflicting class times or missing tutorials.")
+        return
+
+    # Score and sort
+    scored = [(score_schedule(sched), sched) for sched in valid_schedules]
+    scored.sort(key=lambda x: x[0])
+
+    # Show top 3
+    display_top_schedules(scored, top_n=3)
+
+    # Alter 0-3 for first index to change which schedule is plotted
+    best_schedule = scored[0][1]
+    plot_schedule(best_schedule)
+
+AVOID_PROFS = {"Prof 1", "Prof 2"}
 if __name__ == "__main__":
-    courses = parse_input({"COMP 1234", "COMP 5678"})
+    courses = parse_input({"COMP 1805", "COMP 2401", "COMP 2402"})
     optimize_schedule(courses)

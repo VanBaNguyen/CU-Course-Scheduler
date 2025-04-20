@@ -9,10 +9,10 @@ This repository is intended **strictly for theoretical or educational purposes**
 By using this repository, you agree to these terms.
 
 
-
 # CU Course Schedule Optimizer
 
 Python Tool to create the most optimized schedule for CU students, at least the way I see it...
+You do need to alter the code in the main() guard to input your courses.
 
 ## Features
 

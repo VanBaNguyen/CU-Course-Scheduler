@@ -2,16 +2,16 @@
 # This code is for theoretical/educational purposes only.
 # Do not use, share, or deploy this in any real-world application.
 
+import os
 import re
 from pprint import pprint
-import os
 
 def parse_input(wanted_courses):
     # Store results
-    results = []  # Human-readable output
-    structured_results = []  # Final structured output
+    results = []
+    structured_results = []
 
-# Get the absolute path to the input.txt file next to this script
+    # Get the absolute path to the input.txt file next to this script
     base_dir = os.path.dirname(__file__)  # location of parsing.py
     file_path = os.path.join(base_dir, "input.txt")
 
@@ -23,7 +23,7 @@ def parse_input(wanted_courses):
         line = lines[i].strip()
 
         # Look for course code and section
-        match = re.search(r"(COMP \d{4})\s+([A-Z]+\d*)", line)
+        match = re.search(r"([A-Z]{4} \d{4})\s+([A-Z]+\d*)", line)
         if match:
             course_code = match.group(1)  # e.g., COMP 1005
             section = match.group(2)      # e.g., A or A1
