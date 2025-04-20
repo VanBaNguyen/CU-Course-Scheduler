@@ -1,10 +1,10 @@
 ## ⚠️ Disclaimer
 
-This repository is intended **strictly for theoretical or educational purposes**. Please see the [LICENSE](./LICENSE) file for important legal information.
+This repository is intended **strictly for theoretical or educational purposes**.
 
-- Do **not** use this code in production.
-- Do **not** redistribute, share, or publish this code elsewhere.
-- This code is for **study and analysis only**.
+- **Any form of reuse, reproduction, or distribution is strictly prohibited.** 
+- This repository is for academic viewing only.
+> See the LICENSE file for full restrictions.
 
 By using this repository, you agree to these terms.
 
