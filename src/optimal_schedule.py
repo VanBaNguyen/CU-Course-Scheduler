@@ -44,6 +44,9 @@ def build_slots(course_list):
     slots = []
     for item in course_list:
         has_number, course_code, section, prof, days_str, time_str = item
+        if prof == "No No":
+            prof = "N/A"
+
         if time_str.strip() == "Unknown":
             start, end = None, None
             days = []
@@ -236,7 +239,18 @@ def optimize_schedule(course_list):
     best_schedule = scored[0][1]
     plot_schedule(best_schedule)
 
+
 AVOID_PROFS = {"", ""}
 if __name__ == "__main__":
-    courses = parse_input({"COMP 1406", "COMP 1805", "MATH 2107"})
+    fall = "fall.txt"
+    winter = "winter.txt"
+
+    """
+    First Param: List of courses you want to take, held as list of strings
+
+    Second Param: Fall or Winter Term
+    """
+    courses = parse_input({"COMP 2404", "COMP 2804", "MATH 2007", "GEOM 2005"}, winter)
+
+
     optimize_schedule(courses)

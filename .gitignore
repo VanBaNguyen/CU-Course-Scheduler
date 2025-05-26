@@ -174,3 +174,8 @@ cython_debug/
 .pypirc
 
 input.txt
+fall.txt
+winter.txt
+lib/
+share/
+pyvenv.cfg

@@ -2,7 +2,7 @@ import os
 import re
 from pprint import pprint
 
-def parse_input(wanted_courses):
+def parse_input(wanted_courses, term):
     # Store results
     results = []
     structured_results = []
@@ -10,7 +10,7 @@ def parse_input(wanted_courses):
 
     # Get the absolute path to the input.txt file next to this script
     base_dir = os.path.dirname(__file__)  # location of parsing.py
-    file_path = os.path.join(base_dir, "input.txt")
+    file_path = os.path.join(base_dir, term)
 
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
