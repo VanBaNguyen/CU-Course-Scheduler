@@ -65,8 +65,14 @@ def parse_input(wanted_courses, term):
                     days_match = re.search(r"Days:\s*([A-Za-z ]+?)\s+Time:", next_line)
                     time_match = re.search(r"Time:\s*([\d:APM\- ]+)", next_line)
 
-                    days = days_match.group(1).strip() if days_match else "Unknown"
-                    time = time_match.group(1).strip() if time_match else "Unknown"
+                    # Extract Building and Room
+                    bldg_match = re.search(r"Building:\s*([^:]+?)\s+Room:", next_line)
+                    room_match = re.search(r"Room:\s*([\w\- ]+)", next_line)
+
+                    days  = days_match.group(1).strip()  if days_match else "Unknown"
+                    time  = time_match.group(1).strip()  if time_match else "Unknown"
+                    bldg  = bldg_match.group(1).strip()  if bldg_match else "Unknown"
+                    room  = room_match.group(1).strip()  if room_match else "Unknown"
 
                     # Full course with section for display
                     full_course_code = f"{course_code} {section}"
@@ -80,7 +86,9 @@ def parse_input(wanted_courses, term):
                         section,
                         prof_name,
                         days,
-                        time
+                        time,
+                        bldg,
+                        room
                     ])
 
             i += 3

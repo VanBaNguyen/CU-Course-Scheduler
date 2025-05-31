@@ -62,7 +62,7 @@ def times_overlap(slot1, slot2):
 def build_slots(course_list):
     slots = []
     for item in course_list:
-        has_number, course_code, section, prof, days_str, time_str = item
+        (has_number, course_code, section, prof, days_str, time_str, building, room) = item
         if prof == "No No" or prof == "Yes Yes" or prof == "term course":
             prof = "N/A"
 
@@ -84,6 +84,8 @@ def build_slots(course_list):
             'days': days,
             'start': start,
             'end': end,
+            'building': building,     # NEW
+            'room': room,
             'original': item
         }
         slots.append(slot)
@@ -194,7 +196,7 @@ def display_top_schedules(scored_schedules, top_n=3):
         for s in sorted(sched, key=lambda x: (x['days'], x['start'])):
             print(f"{s['course']} {s['section']} | {s['prof']} | Days: {' '.join(s['days'])} | Time: {s['start']} - {s['end']}")
 
-def plot_schedule(schedule):
+def plot_schedule(schedule, *, show_location=True):
     # one‑time map: does this course appear with an OK professor anywhere?
     has_good_prof = {}
     for s in schedule:
@@ -244,15 +246,20 @@ def plot_schedule(schedule):
             ax.add_patch(rect)
 
             # Display course and prof on separate lines
-            label = f"{course}\n{prof}"
-            ax.text(x + 0.02, y + duration / 2, label, va='center', ha='left', fontsize=9)
+            location = f"{slot['building']}\nRoom Number: {slot['room']}".strip()
+            if show_location and location not in ("", "Unknown"):
+                label = f"{course}\n{prof}\n{location}"
+            else:
+                label = f"{course}\n{prof}"
+            ax.text(x + 0.02, y + duration / 2, label,
+                    va='center', ha='left', fontsize=9)
 
     ax.set_title("Your Optimal Weekly Schedule")
     plt.tight_layout()
     plt.show()
 
 # Main function
-def optimize_schedule(course_list):
+def optimize_schedule(course_list, *, show_location=True):
     slots = build_slots(course_list)
     course_groups = group_by_course(slots)
     valid_schedules = generate_valid_schedules(course_groups)
@@ -271,7 +278,7 @@ def optimize_schedule(course_list):
 
     # Alter 0-3 for first index to change which schedule is plotted
     best_schedule = scored[0][1]
-    plot_schedule(best_schedule)
+    plot_schedule(best_schedule, show_location=show_location)
 
 EXCLUDE_PROFS = {""}
 
@@ -279,19 +286,20 @@ EXCLUDE_PROFS = {""}
 AVOID_PROFS = EXCLUDE_PROFS
 
 if __name__ == "__main__":
-    fall = "fall.txt"
+    fall   = "fall.txt"
     winter = "winter.txt"
     summer = "summer.txt"
 
-    """
-    First Param: List of courses you want to take, held as list of strings
+    # ────────────────────────────────────────────────────────────────
+    # INPUT/ADJUSTMENTS
+    # ----------------------------------------------------------------
+    # COURSES        = {""}      # list‑of‑courses the student wants
+    COURSES        = {""}
+    TERM_FILE      = winter      # fall / winter / summer
+    SHOW_LOCATION  = False      # ← set False to hide building + room
+    # ────────────────────────────────────────────────────────────────
 
-    Second Param: Fall or Winter Term
-    """
-    # courses = parse_input({"COMP 2406", "COMP 2404", "GEOM 2005", "COMP 2804"}, fall)
-
-    courses = parse_input({"COMP 3804", "COMP 2109", "COMP 3007", "COMP 2108"}, winter)
-
-    optimize_schedule(courses)
+    courses = parse_input(COURSES, TERM_FILE)
+    optimize_schedule(courses, show_location=SHOW_LOCATION)
 
 # User Input Fields: Courses, Prof Exclusions, Summer/Fall/Winter term?
