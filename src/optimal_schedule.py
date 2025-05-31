@@ -4,10 +4,29 @@ import matplotlib.patches as patches
 from collections import defaultdict
 from datetime import datetime, time
 from itertools import combinations
+from itertools import product
 from parsing import parse_input
+
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
+
+def _preferred_mains(mains):
+    """
+    Return a tuple (usable, force_flag).
+
+    * usable – list of lecture slots we are allowed to schedule
+    * force_flag – True  ⇢ every lecture is taught by an excluded prof
+                   False ⇢ at least one good prof exists
+    """
+    good = [m for m in mains if m['prof'] not in EXCLUDE_PROFS]
+    if good:                       # at least one acceptable professor
+        return good, False
+    # ‑‑ no alternative, keep the originals but mark them -------------
+    for m in mains:
+        m['forced_excluded'] = True
+    return mains, True
+
 
 # Helper: Convert "10:05 - 11:25" to (time(10,5), time(11,25))
 def parse_time_range(time_str):
@@ -44,7 +63,7 @@ def build_slots(course_list):
     slots = []
     for item in course_list:
         has_number, course_code, section, prof, days_str, time_str = item
-        if prof == "No No":
+        if prof == "No No" or prof == "Yes Yes" or prof == "term course":
             prof = "N/A"
 
         if time_str.strip() == "Unknown":
@@ -56,7 +75,6 @@ def build_slots(course_list):
                 print(f"⚠️  Skipping invalid time: {time_str} (Course: {course_code} {section})")
                 continue  # Skip this entry
             days = parse_days(days_str)
-
 
         slot = {
             'has_number': has_number,
@@ -81,15 +99,15 @@ def group_by_course(slots):
 
 # Generate all valid schedule combinations
 def generate_valid_schedules(course_groups):
-    from itertools import product
-
     course_keys = list(course_groups.keys())
     all_course_options = []
 
     for course in course_keys:
         sections = course_groups[course]
-        main_sections = [s for s in sections if not s['has_number']]
-        tutorials = [s for s in sections if s['has_number']]
+        mains_raw = [s for s in sections if not s['has_number']]
+        tutorials       = [s for s in sections if s['has_number']]
+
+        main_sections, forced_only_choice = _preferred_mains(mains_raw)
 
         course_options = []
 
@@ -147,8 +165,8 @@ def score_schedule(schedule):
         if slot['start'].hour < 9:
             early_penalty += 20
 
-        if slot['prof'] in AVOID_PROFS:
-            prof_penalty += 1000
+        # if slot['prof'] in AVOID_PROFS:
+        #     prof_penalty += 1000
 
         for day in slot['days']:
             daily_slots[day].append(slot)
@@ -177,6 +195,12 @@ def display_top_schedules(scored_schedules, top_n=3):
             print(f"{s['course']} {s['section']} | {s['prof']} | Days: {' '.join(s['days'])} | Time: {s['start']} - {s['end']}")
 
 def plot_schedule(schedule):
+    # one‑time map: does this course appear with an OK professor anywhere?
+    has_good_prof = {}
+    for s in schedule:
+        if s['prof'] not in EXCLUDE_PROFS:
+            has_good_prof[s['course']] = True
+
     fig, ax = plt.subplots(figsize=(10, 8))
 
     # Grid: 5 days (Mon–Fri), 8am–6pm
@@ -206,7 +230,17 @@ def plot_schedule(schedule):
                 continue
             x = DAY_TO_INDEX[day]
             y = start_hour
-            rect = patches.Rectangle((x, y), 0.95, duration, color='skyblue', edgecolor='black')
+
+            # --------- choose colour ----------
+            if (slot['prof'] in EXCLUDE_PROFS and
+                not has_good_prof.get(slot['course'], False)):
+                fill_colour = 'lightcoral'   # red – mandatory, no alternative
+            else:
+                fill_colour = 'skyblue'      # normal
+            # ----------------------------------
+
+            rect = patches.Rectangle((x, y), 0.95, duration,
+                                     color=fill_colour, edgecolor='black')
             ax.add_patch(rect)
 
             # Display course and prof on separate lines
@@ -239,18 +273,25 @@ def optimize_schedule(course_list):
     best_schedule = scored[0][1]
     plot_schedule(best_schedule)
 
+EXCLUDE_PROFS = {""}
 
-AVOID_PROFS = {"", ""}
+# basically a legacy variable but I don't want the code to break so don't delete
+AVOID_PROFS = EXCLUDE_PROFS
+
 if __name__ == "__main__":
     fall = "fall.txt"
     winter = "winter.txt"
+    summer = "summer.txt"
 
     """
     First Param: List of courses you want to take, held as list of strings
 
     Second Param: Fall or Winter Term
     """
-    courses = parse_input({"COMP 2404", "COMP 2804", "MATH 2007", "GEOM 2005"}, winter)
+    courses = parse_input({""}, fall)
 
+    # courses = parse_input({""}, fall)
 
     optimize_schedule(courses)
+
+# User Input Fields: Courses, Prof Exclusions, Summer/Fall/Winter term?
