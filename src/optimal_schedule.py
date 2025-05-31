@@ -288,9 +288,9 @@ if __name__ == "__main__":
 
     Second Param: Fall or Winter Term
     """
-    courses = parse_input({""}, fall)
+    # courses = parse_input({"COMP 2406", "COMP 2404", "GEOM 2005", "COMP 2804"}, fall)
 
-    # courses = parse_input({""}, fall)
+    courses = parse_input({"COMP 3804", "COMP 2109", "COMP 3007", "COMP 2108"}, winter)
 
     optimize_schedule(courses)
 

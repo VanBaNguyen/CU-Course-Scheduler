@@ -8,9 +8,27 @@ def parse_input(wanted_courses, term):
     structured_results = []
     seen_courses = set()
 
-    # Get the absolute path to the input.txt file next to this script
-    base_dir = os.path.dirname(__file__)  # location of parsing.py
-    file_path = os.path.join(base_dir, term)
+    # --------------------------------------------------------------------- #
+    # Locate the raw term file
+    #
+    # project/
+    # ├── src/              ← parsing.py lives here
+    # │   └── parsing.py
+    # └── terms/            ← fall.txt, winter.txt, summer.txt
+    #     ├── fall.txt
+    #     ├── winter.txt
+    #     └── summer.txt
+    #
+    # The code below climbs one directory up from src/ and
+    # then descends into terms/<term>.
+    # --------------------------------------------------------------------- #
+    src_dir   = os.path.dirname(os.path.abspath(__file__))     # …/project/src
+    project   = os.path.dirname(src_dir)                       # …/project
+    terms_dir = os.path.join(project, "terms")                 # …/project/terms
+    file_path = os.path.join(terms_dir, term)                  # …/project/terms/fall.txt
+
+    if not os.path.isfile(file_path):
+        raise FileNotFoundError(f"Cannot find term file: {file_path}")
 
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
