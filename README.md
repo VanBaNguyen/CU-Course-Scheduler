@@ -20,7 +20,7 @@ python schedule_opt.py
    * (optionally) avoid named people  
 6. **Rank & print the top 3** plus one fully drawn timetable.
 
-### New since v0.x
+### Features
 
 | Feature | How to use |
 |---------|------------|

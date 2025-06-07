@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # UNTESTED
 # setup.sh ─ quick bootstrap for the course‑scheduler project
-# • Creates terms/{fall.txt,winter.txt,summer.txt}
-# • Sets up Python venv in ./venv
-# • Installs matplotlib inside that venv
+# Creates terms/{fall.txt,winter.txt,summer.txt}
+# Sets up Python venv in ./venv
+# Installs matplotlib inside that venv
 #
 # Usage:
 #   chmod +x setup.sh     # (one‑time)
@@ -31,7 +31,6 @@ else
   echo "    – venv already exists, skipping creation"
 fi
 
-# shellcheck disable=SC1091
 source venv/bin/activate
 echo "    – venv activated"
 
