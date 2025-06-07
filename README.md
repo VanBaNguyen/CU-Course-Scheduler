@@ -1,28 +1,46 @@
-# CU Course Schedule Optimizer
+## CU Course‑Schedule Optimizer
 
-Python Tool to create the most optimized schedule for CU students, at least the way I see it...
-You do need to alter the code in the main() guard to input your courses.
+Small Python Project that takes CU timetable data and spits out the best‑looking week you can get.
 
-## Features
-
-- ✅ Parses university schedule data from `input.txt`
-- ✅ Filters for only the courses you care about
-- ✅ Automatically matches lectures with tutorials when needed
-- ✅ Handles courses with **no tutorials required**
-- ✅ Avoids **overlapping class times**
-- ✅ Scores and ranks schedules based on:
-  - Minimal number of campus days
-  - Short gaps between classes
-  - Avoiding early morning classes
-  - Avoiding specific professors
-- ✅ Displays top 3 best-fit schedules
-- ✅ Visualizes the optimal schedule on a weekly calendar (via `matplotlib`)
-- ✅ Supports late classes (up to 22:00)
-
-### Install dependencies
-
-Make sure you have Python 3.7+ and install `matplotlib`:
-
-```bash
+~~~bash
 pip install matplotlib
-```
+python schedule_opt.py
+~~~
+
+### What it does
+
+1. **Read your raw term file** (`fall.txt`, `winter.txt`, `summer.txt`).  
+2. **Keep just the courses you list** in the `COURSES = {...}` set.  
+3. **Pair every lecture with the right tutorial/lab** (or skip if none).  
+4. **Test every combination** for time clashes and throw the bad ones out.  
+5. **Score each clash‑free schedule**  
+   * fewer campus days  
+   * shorter gaps  
+   * no 8 a.m. misery  
+   * (optionally) avoid named people  
+6. **Rank & print the top 3** plus one fully drawn timetable.
+
+### New since v0.x
+
+| Feature | How to use |
+|---------|------------|
+| **Dark‑mode plot** | `DARK_MODE = True` |
+| **Hide / show room & building** | `SHOW_LOCATION = False` |
+| Subtle dotted grid above blocks | default in dark mode |
+| Handles online / unknown‑time classes gracefully | automatic |
+
+### Other Things
+* Supports classes until **22:00**.    
+* Colour‑coded blocks, readable text labels.  
+* Tweaks are just booleans at the bottom of the script.  
+
+### Quick start
+
+Open **`schedule_opt.py`**, scroll to the bottom and edit:
+
+~~~python
+COURSES       = {"COMP 1234", "MATH 1010", "BUSI 2020"}
+TERM_FILE     = winter          # fall / winter / summer
+SHOW_LOCATION = True
+DARK_MODE     = False
+~~~
