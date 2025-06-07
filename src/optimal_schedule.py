@@ -84,7 +84,7 @@ def build_slots(course_list):
             'days': days,
             'start': start,
             'end': end,
-            'building': building,     # NEW
+            'building': building,
             'room': room,
             'original': item
         }
@@ -196,89 +196,110 @@ def display_top_schedules(scored_schedules, top_n=3):
         for s in sorted(sched, key=lambda x: (x['days'], x['start'])):
             print(f"{s['course']} {s['section']} | {s['prof']} | Days: {' '.join(s['days'])} | Time: {s['start']} - {s['end']}")
 
-def plot_schedule(schedule, *, show_location=True):
-    # one‑time map: does this course appear with an OK professor anywhere?
-    has_good_prof = {}
-    for s in schedule:
-        if s['prof'] not in EXCLUDE_PROFS:
-            has_good_prof[s['course']] = True
+def plot_schedule(schedule, *, show_location=True, dark_mode=False):
+    # does this course appear with an OK professor anywhere?
+    has_good_prof = {s['course']: (s['prof'] not in EXCLUDE_PROFS)
+                     for s in schedule if s['prof'] not in EXCLUDE_PROFS}
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    # ----------------------------------------------------------------
+    # colours & style
+    # ----------------------------------------------------------------
+    if dark_mode:
+        plt.style.use("dark_background")
+        bg_colour     = "#111111"
+        text_colour   = "white"
+        normal_colour = "#3b78ff"
+        forced_colour = "#c94c4c"
 
-    # Grid: 5 days (Mon–Fri), 8am–6pm
+        grid_kwargs   = dict(color="#444444",  # dim, mid‑grey
+                             linestyle="--",
+                             linewidth=0.6,
+                             alpha=0.25)       # ← lower opacity
+    else:
+        bg_colour     = "white"
+        text_colour   = "black"
+        normal_colour = "skyblue"
+        forced_colour = "lightcoral"
+
+        grid_kwargs   = dict(color="black",
+                             linestyle="--",
+                             linewidth=0.8,
+                             alpha=0.4)
+
+    fig, ax = plt.subplots(figsize=(10, 8), facecolor=bg_colour)
+    ax.set_facecolor(bg_colour)
+
+    # grid & axes -----------------------------------------------------
     ax.set_xlim(0, 5)
     ax.set_ylim(8, 22)
     ax.invert_yaxis()
 
     ax.set_xticks(range(5))
-    ax.set_xticklabels(DAYS)
+    ax.set_xticklabels(DAYS, color=text_colour)
     ax.set_yticks(range(8, 23))
-    ax.set_yticklabels([f"{h:02d}:00" for h in range(8, 23)])
-    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.set_yticklabels([f"{h:02d}:00" for h in range(8, 23)], color=text_colour)
 
+    ax.set_axisbelow(True)          # make sure grid stays *under* rectangles
+    ax.grid(True, **grid_kwargs)
+
+    # slots -----------------------------------------------------------
     for slot in schedule:
-        # Skip online courses (no time data)
         if not slot['start'] or not slot['end']:
-            continue
+            continue          # online / unknown time
 
         course = f"{slot['course']} {slot['section']}"
-        prof = slot['prof']
         start_hour = slot['start'].hour + slot['start'].minute / 60
-        end_hour = slot['end'].hour + slot['end'].minute / 60
-        duration = end_hour - start_hour
+        end_hour   = slot['end'].hour   + slot['end'].minute   / 60
+        duration   = end_hour - start_hour
+
+        # choose colour
+        if slot['prof'] in EXCLUDE_PROFS and not has_good_prof.get(slot['course']):
+            fill_colour = forced_colour
+        else:
+            fill_colour = normal_colour
 
         for day in slot['days']:
             if day not in DAY_TO_INDEX:
                 continue
             x = DAY_TO_INDEX[day]
-            y = start_hour
-
-            # --------- choose colour ----------
-            if (slot['prof'] in EXCLUDE_PROFS and
-                not has_good_prof.get(slot['course'], False)):
-                fill_colour = 'lightcoral'   # red – mandatory, no alternative
-            else:
-                fill_colour = 'skyblue'      # normal
-            # ----------------------------------
-
-            rect = patches.Rectangle((x, y), 0.95, duration,
-                                     color=fill_colour, edgecolor='black')
+            rect = patches.Rectangle((x, start_hour), 0.95, duration,
+                                     color=fill_colour, edgecolor=text_colour,
+                                     linewidth=1.2)
             ax.add_patch(rect)
 
-            # Display course and prof on separate lines
-            location = f"{slot['building']}\nRoom Number: {slot['room']}".strip()
+            location = f"{slot['building']}\nRoom: {slot['room']}".strip()
             if show_location and location not in ("", "Unknown"):
-                label = f"{course}\n{prof}\n{location}"
+                label = f"{course}\n{slot['prof']}\n{location}"
             else:
-                label = f"{course}\n{prof}"
-            ax.text(x + 0.02, y + duration / 2, label,
-                    va='center', ha='left', fontsize=9)
+                label = f"{course}\n{slot['prof']}"
+            ax.text(x + 0.02, start_hour + duration / 2, label,
+                    va="center", ha="left", fontsize=9, color=text_colour)
 
-    ax.set_title("Your Optimal Weekly Schedule")
+    ax.set_title("Your Optimal Weekly Schedule", color=text_colour)
     plt.tight_layout()
     plt.show()
 
 # Main function
-def optimize_schedule(course_list, *, show_location=True):
-    slots = build_slots(course_list)
-    course_groups = group_by_course(slots)
+def optimize_schedule(course_list, *, show_location=True, dark_mode=False):
+    slots          = build_slots(course_list)
+    course_groups  = group_by_course(slots)
     valid_schedules = generate_valid_schedules(course_groups)
 
     if not valid_schedules:
         print("No valid schedules found.")
-        print("Please check for conflicting class times or missing tutorials.")
         return
 
-    # Score and sort
-    scored = [(score_schedule(sched), sched) for sched in valid_schedules]
-    scored.sort(key=lambda x: x[0])
+    scored = sorted(
+        ((score_schedule(s), s) for s in valid_schedules),
+        key=lambda x: x[0]
+    )
 
-    # Show top 3
     display_top_schedules(scored, top_n=3)
 
-    # Alter 0-3 for first index to change which schedule is plotted
     best_schedule = scored[0][1]
-    plot_schedule(best_schedule, show_location=show_location)
+    plot_schedule(best_schedule,
+                  show_location=show_location,
+                  dark_mode=dark_mode)
 
 EXCLUDE_PROFS = {""}
 
@@ -294,12 +315,18 @@ if __name__ == "__main__":
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
     # COURSES        = {""}      # list‑of‑courses the student wants
+    # COURSES        = {""}
+    # TERM_FILE      = fall      # fall / winter / summer
+
     COURSES        = {""}
-    TERM_FILE      = winter      # fall / winter / summer
-    SHOW_LOCATION  = False      # ← set False to hide building + room
+    TERM_FILE      = winter
+    SHOW_LOCATION  = True        # ← set False to hide building + room
+    DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────
 
     courses = parse_input(COURSES, TERM_FILE)
-    optimize_schedule(courses, show_location=SHOW_LOCATION)
+    optimize_schedule(courses,
+                      show_location=SHOW_LOCATION,
+                      dark_mode=DARK_MODE)
 
-# User Input Fields: Courses, Prof Exclusions, Summer/Fall/Winter term?
+# User Input Fields: Courses, Prof Exclusions, Summer/Fall/Winter term, Show Location (y/n), Dark Mode (y/n)
