@@ -10,6 +10,8 @@ from parsing import parse_input
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
+ONLINE_BUILDING = "ON"
+ONLINE_ROOM     = "LINE"
 
 def _preferred_mains(mains):
     """
@@ -76,6 +78,10 @@ def build_slots(course_list):
                 continue  # Skip this entry
             days = parse_days(days_str)
 
+        # ---------------- online flags ----------------
+        is_online = (building == ONLINE_BUILDING and room == ONLINE_ROOM)
+        is_online_scheduled = is_online and start is not None and end is not None
+
         slot = {
             'has_number': has_number,
             'course': course_code,
@@ -86,7 +92,11 @@ def build_slots(course_list):
             'end': end,
             'building': building,
             'room': room,
-            'original': item
+            'original': item,
+            # • “online”  = any ON‑LINE offering (scheduled *or* unscheduled)
+            # • “online_scheduled”  = ON‑LINE *and* has a start/end time
+            'is_online': is_online,
+            'is_online_scheduled': is_online_scheduled,
         }
         slots.append(slot)
     return slots
@@ -173,15 +183,19 @@ def score_schedule(schedule):
         for day in slot['days']:
             daily_slots[day].append(slot)
 
-    total_days = len(daily_slots)
-
+    active_days = 0
     for day, slots in daily_slots.items():
+        if any(not s['is_online_scheduled'] for s in slots):
+            active_days += 1
+
+        # gaps are still relevant whenever >=2 scheduled things share that day
         slots.sort(key=lambda x: x['start'])
         for i in range(len(slots) - 1):
-            gap = datetime.combine(datetime.today(), slots[i + 1]['start']) - datetime.combine(datetime.today(), slots[i]['end'])
+            gap = (datetime.combine(datetime.today(), slots[i + 1]['start']) -
+                   datetime.combine(datetime.today(), slots[i    ]['end']))
             total_gap_minutes += max(0, gap.total_seconds() / 60)
 
-    return total_days * 1000 + total_gap_minutes + early_penalty + prof_penalty
+    return active_days * 1000 + total_gap_minutes + early_penalty + prof_penalty
 
 # Format for display
 def display_schedule(schedule):
@@ -206,25 +220,21 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
     # ----------------------------------------------------------------
     if dark_mode:
         plt.style.use("dark_background")
-        bg_colour     = "#111111"
-        text_colour   = "white"
-        normal_colour = "#3b78ff"
-        forced_colour = "#c94c4c"
-
-        grid_kwargs   = dict(color="#444444",  # dim, mid‑grey
-                             linestyle="--",
-                             linewidth=0.6,
-                             alpha=0.25)       # ← lower opacity
+        bg_colour      = "#111111"
+        text_colour    = "white"
+        normal_colour  = "#3b78ff"
+        forced_colour  = "#c94c4c"
+        online_colour  = "lightgreen"
+        grid_kwargs    = dict(color="#444444", linestyle="--",
+                              linewidth=0.6, alpha=0.25)
     else:
-        bg_colour     = "white"
-        text_colour   = "black"
-        normal_colour = "skyblue"
-        forced_colour = "lightcoral"
-
-        grid_kwargs   = dict(color="black",
-                             linestyle="--",
-                             linewidth=0.8,
-                             alpha=0.4)
+        bg_colour      = "white"
+        text_colour    = "black"
+        normal_colour  = "skyblue"
+        forced_colour  = "lightcoral"
+        online_colour  = "lightgreen"
+        grid_kwargs    = dict(color="black", linestyle="--",
+                              linewidth=0.8, alpha=0.4)
 
     fig, ax = plt.subplots(figsize=(10, 8), facecolor=bg_colour)
     ax.set_facecolor(bg_colour)
@@ -244,17 +254,20 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
 
     # slots -----------------------------------------------------------
     for slot in schedule:
-        if not slot['start'] or not slot['end']:
-            continue          # online / unknown time
+        # asynchronous online courses (no time) aren’t plotted
+        if slot['start'] is None or slot['end'] is None:
+            continue
 
-        course = f"{slot['course']} {slot['section']}"
-        start_hour = slot['start'].hour + slot['start'].minute / 60
-        end_hour   = slot['end'].hour   + slot['end'].minute   / 60
-        duration   = end_hour - start_hour
+        course       = f"{slot['course']} {slot['section']}"
+        start_hour   = slot['start'].hour + slot['start'].minute / 60
+        end_hour     = slot['end'].hour   + slot['end'].minute   / 60
+        duration     = end_hour - start_hour
 
-        # choose colour
+        # colour selection ‑‑ order matters
         if slot['prof'] in EXCLUDE_PROFS and not has_good_prof.get(slot['course']):
             fill_colour = forced_colour
+        elif slot['is_online_scheduled']:
+            fill_colour = online_colour
         else:
             fill_colour = normal_colour
 
@@ -263,17 +276,24 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
                 continue
             x = DAY_TO_INDEX[day]
             rect = patches.Rectangle((x, start_hour), 0.95, duration,
-                                     color=fill_colour, edgecolor=text_colour,
+                                     color=fill_colour,
+                                     edgecolor=text_colour,
                                      linewidth=1.2)
             ax.add_patch(rect)
 
-            location = f"{slot['building']}\nRoom: {slot['room']}".strip()
+            if slot['is_online']:
+                location = "Online (Zoom)"
+            else:
+                location = f"{slot['building']}\nRoom: {slot['room']}".strip()
+
             if show_location and location not in ("", "Unknown"):
                 label = f"{course}\n{slot['prof']}\n{location}"
             else:
                 label = f"{course}\n{slot['prof']}"
-            ax.text(x + 0.02, start_hour + duration / 2, label,
-                    va="center", ha="left", fontsize=9, color=text_colour)
+
+            ax.text(x + 0.02, start_hour + duration / 2,
+                    label, va="center", ha="left",
+                    fontsize=9, color=text_colour)
 
     ax.set_title("Your Optimal Weekly Schedule", color=text_colour)
     plt.tight_layout()
