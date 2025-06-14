@@ -7,7 +7,6 @@ from itertools import combinations
 from itertools import product
 from parsing import parse_input
 
-
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
 ONLINE_BUILDING = "ON"
@@ -64,39 +63,59 @@ def times_overlap(slot1, slot2):
 def build_slots(course_list):
     slots = []
     for item in course_list:
-        (has_number, course_code, section, prof, days_str, time_str, building, room) = item
-        if prof == "No No" or prof == "Yes Yes" or prof == "term course":
+        (has_number, course_code, section,
+         prof, days_str, time_str, building, room) = item
+
+        if prof in ("No No", "Yes Yes", "term course"):
             prof = "N/A"
 
-        if time_str.strip() == "Unknown":
-            start, end = None, None
-            days = []
+        #  first find out whether this is an ON-LINE offering
+        is_online = (building == ONLINE_BUILDING and room == ONLINE_ROOM)
+
+        # normalise the raw strings
+        days_trim  = days_str.strip()
+        time_trim  = time_str.strip()
+
+        # (a) no day / time given  → asynchronous ON-LINE or “Unknown”
+        if days_trim in ("", "Unknown"):
+            days = []                # keep it empty so it never plots
         else:
-            start, end = parse_time_range(time_str)
-            if not start or not end:
-                print(f"⚠️  Skipping invalid time: {time_str} (Course: {course_code} {section})")
-                continue  # Skip this entry
-            days = parse_days(days_str)
+            days = parse_days(days_trim)
+
+        if time_trim in ("", "Unknown"):
+            start, end = None, None  # unscheduled (async) slot
+        else:
+            start, end = parse_time_range(time_trim)
+            if start is None or end is None:
+                # bad clock format → skip *unless* it’s ON-LINE async
+                if not is_online:                      # offline garbage
+                    print(f"⚠️  Skipping invalid time: {time_trim}"
+                          f" (Course: {course_code} {section})")
+                    continue
+                start, end = None, None
 
         # ---------------- online flags ----------------
         is_online = (building == ONLINE_BUILDING and room == ONLINE_ROOM)
         is_online_scheduled = is_online and start is not None and end is not None
 
+        # treat asynchronous ON-LINE offerings as “mains” (lecture-like)
+        if is_online and not is_online_scheduled:
+            has_number = False
+
+        #build the slot
         slot = {
             'has_number': has_number,
-            'course': course_code,
-            'section': section,
-            'prof': prof,
-            'days': days,
-            'start': start,
-            'end': end,
-            'building': building,
-            'room': room,
-            'original': item,
-            # • “online”  = any ON‑LINE offering (scheduled *or* unscheduled)
-            # • “online_scheduled”  = ON‑LINE *and* has a start/end time
-            'is_online': is_online,
-            'is_online_scheduled': is_online_scheduled,
+            'course':     course_code,
+            'section':    section,
+            'prof':       prof,
+            'days':       days,
+            'start':      start,
+            'end':        end,
+            'building':   building,
+            'room':       room,
+            'original':   item,
+            'is_online':            is_online,
+            'is_online_scheduled':  is_online_scheduled,
         }
         slots.append(slot)
     return slots
@@ -214,6 +233,8 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
     # does this course appear with an OK professor anywhere?
     has_good_prof = {s['course']: (s['prof'] not in EXCLUDE_PROFS)
                      for s in schedule if s['prof'] not in EXCLUDE_PROFS}
+    
+    async_courses = [] 
 
     # ----------------------------------------------------------------
     # colours & style
@@ -236,7 +257,7 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
         grid_kwargs    = dict(color="black", linestyle="--",
                               linewidth=0.8, alpha=0.4)
 
-    fig, ax = plt.subplots(figsize=(10, 8), facecolor=bg_colour)
+    fig, ax = plt.subplots(figsize=(12, 9), facecolor=bg_colour)   # ← was (10, 8)
     ax.set_facecolor(bg_colour)
 
     # grid & axes -----------------------------------------------------
@@ -254,7 +275,12 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
 
     # slots -----------------------------------------------------------
     for slot in schedule:
-        # asynchronous online courses (no time) aren’t plotted
+        # A-sync ON-LINE: skip plotting but remember the course
+        if slot['is_online'] and not slot['is_online_scheduled']:
+            async_courses.append(slot['course'])      # or f"{slot['course']} {slot['section']}"
+            continue
+
+        # anything else that still has no time (rare offline “Unknown”) – ignore
         if slot['start'] is None or slot['end'] is None:
             continue
 
@@ -294,9 +320,19 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
             ax.text(x + 0.02, start_hour + duration / 2,
                     label, va="center", ha="left",
                     fontsize=9, color=text_colour)
-
+            
+    # ── AFTER the rectangles are done ────────────────────────────────
     ax.set_title("Your Optimal Weekly Schedule", color=text_colour)
-    plt.tight_layout()
+
+    plt.tight_layout(rect=[0, 0.07, 1, 1])
+
+    if async_courses:
+        label = "ONLINE ASYNC COURSES: " + ", ".join(sorted(set(async_courses)))
+        fig.text(0.01, 0.02,                       # x=1 % from left, y=2 % up
+                 label,
+                 ha="left", va="bottom",
+                 fontsize=11, color=text_colour)
+
     plt.show()
 
 # Main function
@@ -334,12 +370,9 @@ if __name__ == "__main__":
     # ────────────────────────────────────────────────────────────────
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
-    # COURSES        = {""}      # list‑of‑courses the student wants
-    # COURSES        = {""}
-    # TERM_FILE      = fall      # fall / winter / summer
 
-    COURSES        = {""}
-    TERM_FILE      = winter
+    COURSES = {""}
+    TERM_FILE      = fall
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────
