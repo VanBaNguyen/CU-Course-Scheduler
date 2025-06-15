@@ -1,4 +1,5 @@
 import copy
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import os
@@ -7,6 +8,7 @@ from datetime import datetime, time
 from itertools import combinations
 from itertools import product
 from parsing import parse_input
+matplotlib.use("Agg") # Use non-interactive backend for plotting
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
@@ -230,7 +232,7 @@ def display_top_schedules(scored_schedules, top_n=3):
         for s in sorted(sched, key=lambda x: (x['days'], x['start'])):
             print(f"{s['course']} {s['section']} | {s['prof']} | Days: {' '.join(s['days'])} | Time: {s['start']} - {s['end']}")
 
-def plot_schedule(schedule, *, show_location=True, dark_mode=False):
+def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None):
     # does this course appear with an OK professor anywhere?
     has_good_prof = {s['course']: (s['prof'] not in EXCLUDE_PROFS)
                      for s in schedule if s['prof'] not in EXCLUDE_PROFS}
@@ -332,10 +334,11 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
     save_dir  = "schedules"                    # ← folder name you want
     os.makedirs(save_dir, exist_ok=True)       # create if it’s missing
 
-    stamp     = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = os.path.join(save_dir, f"schedule_{stamp}.png")
-    fig.savefig(file_path, dpi=300, bbox_inches="tight")
-    print(f"✅  Saved to {file_path}")
+    # save only if caller asks
+    if outfile is not None:
+        os.makedirs(os.path.dirname(outfile), exist_ok=True)
+        fig.savefig(outfile, dpi=300, bbox_inches="tight")
+        print(f"✅  Saved   {outfile}")
 
     if async_courses:
         label = "ONLINE ASYNC COURSES: " + ", ".join(sorted(set(async_courses)))
@@ -363,10 +366,21 @@ def optimize_schedule(course_list, *, show_location=True, dark_mode=False):
 
     display_top_schedules(scored, top_n=3)
 
-    best_schedule = scored[0][1]
-    plot_schedule(best_schedule,
-                  show_location=show_location,
-                  dark_mode=dark_mode)
+    # make a run folder inside ./schedules/
+    root_dir = "schedules"
+    ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir  = os.path.join(root_dir, ts)
+    os.makedirs(run_dir, exist_ok=True)
+    print(f"\n📂  Saving plots in {run_dir}\n")
+
+    # plot & save the 3 best schedules
+    for idx, (score, sched) in enumerate(scored[:3], start=1):
+        fname   = f"schedule{idx}_{int(score)}.png"
+        outfile = os.path.join(run_dir, fname)
+        plot_schedule(sched,
+                      show_location=show_location,
+                      dark_mode=dark_mode,
+                      outfile=outfile)
 
 EXCLUDE_PROFS = {""}
 
@@ -382,7 +396,7 @@ if __name__ == "__main__":
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
 
-    COURSES = {"COMP 3005", "COMP 3007"}
+    COURSES = {""}
     TERM_FILE      = winter
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
