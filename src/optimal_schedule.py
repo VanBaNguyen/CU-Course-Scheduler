@@ -1,6 +1,7 @@
 import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import os
 from collections import defaultdict
 from datetime import datetime, time
 from itertools import combinations
@@ -321,10 +322,20 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False):
                     label, va="center", ha="left",
                     fontsize=9, color=text_colour)
             
-    # ── AFTER the rectangles are done ────────────────────────────────
+    # ── AFTER the rectangles are done ─────────────────────────
     ax.set_title("Your Optimal Weekly Schedule", color=text_colour)
 
     plt.tight_layout(rect=[0, 0.07, 1, 1])
+
+    # automatically save the figure
+    # ── save to ./schedules/
+    save_dir  = "schedules"                    # ← folder name you want
+    os.makedirs(save_dir, exist_ok=True)       # create if it’s missing
+
+    stamp     = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = os.path.join(save_dir, f"schedule_{stamp}.png")
+    fig.savefig(file_path, dpi=300, bbox_inches="tight")
+    print(f"✅  Saved to {file_path}")
 
     if async_courses:
         label = "ONLINE ASYNC COURSES: " + ", ".join(sorted(set(async_courses)))
@@ -371,8 +382,8 @@ if __name__ == "__main__":
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
 
-    COURSES = {""}
-    TERM_FILE      = fall
+    COURSES = {"COMP 3005", "COMP 3007"}
+    TERM_FILE      = winter
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────
