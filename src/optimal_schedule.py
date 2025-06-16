@@ -98,12 +98,8 @@ def build_slots(course_list):
                 start, end = None, None
 
         # ---------------- online flags ----------------
-        is_online = (building == ONLINE_BUILDING and room == ONLINE_ROOM)
-        is_online_scheduled = is_online and start is not None and end is not None
-
-        # treat asynchronous ON-LINE offerings as “mains” (lecture-like)
-        if is_online and not is_online_scheduled:
-            has_number = False
+        is_async             = is_online and start is None and end is None
+        is_online_scheduled  = is_online and not is_async
 
         #build the slot
         slot = {
@@ -118,6 +114,7 @@ def build_slots(course_list):
             'room':       room,
             'original':   item,
             'is_online':            is_online,
+            'is_async':             is_async,
             'is_online_scheduled':  is_online_scheduled,
         }
         slots.append(slot)
@@ -329,6 +326,13 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
 
     plt.tight_layout(rect=[0, 0.07, 1, 1])
 
+    if async_courses:
+        label = "ONLINE ASYNC COURSES: " + ", ".join(sorted(set(async_courses)))
+        fig.text(0.01, 0.02,                       # x=1 % from left, y=2 % up
+                 label,
+                 ha="left", va="bottom",
+                 fontsize=11, color=text_colour)
+        
     # automatically save the figure
     # ── save to ./schedules/
     save_dir  = "schedules"                    # ← folder name you want
@@ -340,12 +344,6 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
         fig.savefig(outfile, dpi=300, bbox_inches="tight")
         print(f"✅  Saved   {outfile}")
 
-    if async_courses:
-        label = "ONLINE ASYNC COURSES: " + ", ".join(sorted(set(async_courses)))
-        fig.text(0.01, 0.02,                       # x=1 % from left, y=2 % up
-                 label,
-                 ha="left", va="bottom",
-                 fontsize=11, color=text_colour)
 
     plt.show()
 
@@ -395,9 +393,8 @@ if __name__ == "__main__":
     # ────────────────────────────────────────────────────────────────
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
-
     COURSES = {""}
-    TERM_FILE      = winter
+    TERM_FILE      = fall
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────
