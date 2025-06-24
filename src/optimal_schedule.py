@@ -333,16 +333,27 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
                  ha="left", va="bottom",
                  fontsize=11, color=text_colour)
         
-    # automatically save the figure
-    # ── save to ./schedules/
-    save_dir  = "schedules"                    # ← folder name you want
+    # Get the absolute path to the script's directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Set up the schedules directory inside the script's folder
+    save_dir = os.path.join(script_dir, "schedules")
     os.makedirs(save_dir, exist_ok=True)       # create if it’s missing
 
     # save only if caller asks
     if outfile is not None:
-        os.makedirs(os.path.dirname(outfile), exist_ok=True)
-        fig.savefig(outfile, dpi=300, bbox_inches="tight")
-        print(f"✅  Saved   {outfile}")
+        # Remove any leading "schedules/" or os.sep from outfile
+        outfile_rel = outfile
+        if outfile_rel.startswith("schedules" + os.sep):
+            outfile_rel = outfile_rel[len("schedules" + os.sep):]
+        elif outfile_rel.startswith("schedules/"):
+            outfile_rel = outfile_rel[len("schedules/"):]
+        outfile_rel = outfile_rel.lstrip(os.sep)
+
+        outfile_path = os.path.join(save_dir, outfile_rel)
+        os.makedirs(os.path.dirname(outfile_path), exist_ok=True)
+        fig.savefig(outfile_path, dpi=300, bbox_inches="tight")
+        print(f"✅  Saved   {outfile_path}")
 
 
     plt.show()
@@ -393,8 +404,8 @@ if __name__ == "__main__":
     # ────────────────────────────────────────────────────────────────
     # INPUT/ADJUSTMENTS
     # ----------------------------------------------------------------
-    COURSES = {""}
-    TERM_FILE      = fall
+    COURSES = {"COMP 3007", "COMP 3004", "COMP 4602"}
+    TERM_FILE      = winter
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────
