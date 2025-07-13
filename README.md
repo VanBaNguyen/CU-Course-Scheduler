@@ -20,6 +20,17 @@ python schedule_opt.py
    * (optionally) avoid named people  
 6. **Rank & print the top 3** plus one fully drawn timetable.
 
+
+### Example Schedule
+
+```python
+COURSES = {"COMP 3007", "COMP 3000", "COMP 3004", "COMP 3804"}
+TERM_FILE = winter
+```
+
+<img src="assets/schedule1_3450.png" alt="example-schedule" width="750"/>
+
+
 ### Features
 
 | Feature | How to use |
