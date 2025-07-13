@@ -1,6 +1,6 @@
 ## CU Course‑Schedule Optimizer
 
-Small Python Project that takes CU timetable data and spits out the best‑looking week you can get.
+Python Program that takes CU timetable data and creates the most efficient timetable possible.
 
 ~~~bash
 pip install matplotlib
@@ -30,6 +30,7 @@ TERM_FILE = winter
 
 <img src="assets/schedule1_3450.png" alt="example-schedule" width="750"/>
 
+The score of this schedule is 3450 (3000- for number of days, 450 for the gap between classes, lower score is better). The score is in the file name.
 
 ### Features
 
