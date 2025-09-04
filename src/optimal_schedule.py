@@ -336,8 +336,9 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
     # Get the absolute path to the script's directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # Set up the schedules directory inside the script's folder
-    save_dir = os.path.join(script_dir, "schedules")
+    # Set up the schedules directory parallel to 'src' (project root / schedules)
+    project_root = os.path.dirname(script_dir)
+    save_dir = os.path.join(project_root, "schedules")
     os.makedirs(save_dir, exist_ok=True)       # create if it’s missing
 
     # save only if caller asks
@@ -375,23 +376,25 @@ def optimize_schedule(course_list, *, show_location=True, dark_mode=False):
 
     display_top_schedules(scored, top_n=3)
 
-    # make a run folder inside ./schedules/
-    root_dir = "schedules"
-    ts       = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir  = os.path.join(root_dir, ts)
-    os.makedirs(run_dir, exist_ok=True)
-    print(f"\n📂  Saving plots in {run_dir}\n")
+    # make a run folder inside ../schedules/ (parallel to src)
+    script_dir   = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    root_dir_abs = os.path.join(project_root, "schedules")
+    ts           = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir_rel  = os.path.join("schedules", ts)
+    run_dir_abs  = os.path.join(root_dir_abs, ts)
+    print(f"\n📂  Saving plots in {run_dir_abs}\n")
 
     # plot & save the 3 best schedules
     for idx, (score, sched) in enumerate(scored[:3], start=1):
         fname   = f"schedule{idx}_{int(score)}.png"
-        outfile = os.path.join(run_dir, fname)
+        outfile = os.path.join(run_dir_rel, fname)
         plot_schedule(sched,
                       show_location=show_location,
                       dark_mode=dark_mode,
                       outfile=outfile)
 
-EXCLUDE_PROFS = {""}
+EXCLUDE_PROFS = {}
 
 # basically a legacy variable but I don't want the code to break so don't delete
 AVOID_PROFS = EXCLUDE_PROFS
@@ -402,10 +405,11 @@ if __name__ == "__main__":
     summer = "summer.txt"
 
     # ────────────────────────────────────────────────────────────────
-    # INPUT/ADJUSTMENTS
+    # INPUT/ADJUSTMENTSß
     # ----------------------------------------------------------------
-    COURSES = {"COMP 3007", "COMP 3004", "COMP 4602"}
-    TERM_FILE      = winter
+
+    COURSES = {""}
+    TERM_FILE      = fall
     SHOW_LOCATION  = True        # ← set False to hide building + room
     DARK_MODE      = False
     # ────────────────────────────────────────────────────────────────

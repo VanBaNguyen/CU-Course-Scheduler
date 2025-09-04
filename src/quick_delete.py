@@ -4,7 +4,7 @@ import shutil
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 SCHEDULE_DIR = os.path.join(SCRIPT_DIR, "schedules")
 
-WHITELIST = {""}
+WHITELIST = {"5c_winter_no3804", "van_fall", "van_winter_no3804", "van_winter3804"}
 
 def delete_nonwhitelist_subfolders(schedule_dir, whitelist):
     print(f"Looking in: {schedule_dir}")
