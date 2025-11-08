@@ -1,7 +1,7 @@
 import os
 import shutil
 
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCHEDULE_DIR = os.path.join(SCRIPT_DIR, "schedules")
 
 WHITELIST = {"5c_winter_no3804", "van_fall", "van_winter_no3804", "van_winter3804"}
