@@ -7,7 +7,7 @@ from parsing import parse_input
 # INPUT/ADJUSTMENTS
 # ────────────────────────────────────────────────────────────────
 
-COURSES = {"COMP 2108", "COMP 2109"}
+COURSES = {"COMP 2108", "COMP 2109", "COMP 3000", "MATH 2007"}
 EXCLUDE_PROFS = {""}
 
 # Term codes: last 2 digits determine season

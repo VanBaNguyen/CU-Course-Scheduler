@@ -5,7 +5,7 @@ from pprint import pprint
 def parse_input(wanted_courses, term):
     """
     Parse course data from term file.
-    Returns list of: [has_number, course_code, section, prof, days, time, building, room]
+    Returns list of: [has_number, course_code, section, prof, days, time, building]
     """
     structured_results = []
     seen_courses = set()
@@ -26,13 +26,10 @@ def parse_input(wanted_courses, term):
     while i < len(lines):
         line = lines[i].strip()
         
-        # Skip empty lines
         if not line:
             i += 1
             continue
 
-        # Look for course line with CRN (5-digit number)
-        # Format: Status \t CRN \t SUBJ NUM \t Section \t Title \t Credits \t Type \t ... \t Prof
         crn_match = re.search(r'\b(\d{5})\b', line)
         course_match = re.search(r'([A-Z]{4})\s+(\d{4})\s+([A-Z]+\d*)', line)
         
@@ -43,7 +40,6 @@ def parse_input(wanted_courses, term):
             course_code = f"{subject} {number}"
             course_key = f"{course_code} {section}"
             
-            # Skip if not in wanted courses or already seen
             if course_code not in wanted_courses:
                 i += 1
                 continue
@@ -52,35 +48,28 @@ def parse_input(wanted_courses, term):
                 continue
             seen_courses.add(course_key)
             
-            # Check if section has a number (tutorial/lab)
             has_number = bool(re.search(r'\d', section))
             
-            # Extract professor - usually last two words before Meeting Date or end
             parts = line.split('\t')
             prof_name = "Unknown"
             for part in reversed(parts):
                 part = part.strip()
                 if part and not re.search(r'(Meeting|Date|Yes|No|Lecture|Tutorial|Lab|\.5|^0$|\d{5})', part):
-                    # Check if it looks like a name (two words)
                     words = part.split()
                     if len(words) >= 2 and all(w[0].isupper() for w in words if w):
                         prof_name = part
                         break
             
-            # Look for Meeting Date line
             days = "Unknown"
             time_str = "Unknown"
             building = "Unknown"
-            room = "Unknown"
             
-            # Check next few lines for meeting info
             for j in range(i, min(i + 4, len(lines))):
                 next_line = lines[j].strip()
                 if 'Meeting Date:' in next_line or 'Days:' in next_line:
                     days_match = re.search(r'Days:\s*([A-Za-z ]*?)\s*Time:', next_line)
                     time_match = re.search(r'Time:\s*([\d:\- ]+)', next_line)
                     bldg_match = re.search(r'Building:\s*([^R]+?)\s*Room:', next_line)
-                    room_match = re.search(r'Room:\s*(\S+)', next_line)
                     
                     if days_match:
                         days = days_match.group(1).strip() or "Unknown"
@@ -88,8 +77,6 @@ def parse_input(wanted_courses, term):
                         time_str = time_match.group(1).strip()
                     if bldg_match:
                         building = bldg_match.group(1).strip()
-                    if room_match:
-                        room = room_match.group(1).strip()
                     break
             
             structured_results.append([
@@ -99,8 +86,7 @@ def parse_input(wanted_courses, term):
                 prof_name,
                 days,
                 time_str,
-                building,
-                room
+                building
             ])
         
         i += 1

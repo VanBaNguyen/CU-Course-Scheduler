@@ -13,7 +13,6 @@ matplotlib.use("Agg") # Use non-interactive backend for plotting
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 DAY_TO_INDEX = {day: i for i, day in enumerate(DAYS)}
 ONLINE_BUILDING = "ON"
-ONLINE_ROOM     = "LINE"
 
 def _preferred_mains(mains):
     """
@@ -67,13 +66,13 @@ def build_slots(course_list):
     slots = []
     for item in course_list:
         (has_number, course_code, section,
-         prof, days_str, time_str, building, room) = item
+         prof, days_str, time_str, building) = item
 
         if prof in ("No No", "Yes Yes", "term course"):
             prof = "N/A"
 
         #  first find out whether this is an ON-LINE offering
-        is_online = (building == ONLINE_BUILDING and room == ONLINE_ROOM)
+        is_online = (building == ONLINE_BUILDING)
 
         # normalise the raw strings
         days_trim  = days_str.strip()
@@ -111,7 +110,6 @@ def build_slots(course_list):
             'start':      start,
             'end':        end,
             'building':   building,
-            'room':       room,
             'original':   item,
             'is_online':            is_online,
             'is_async':             is_async,
@@ -308,9 +306,9 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
             ax.add_patch(rect)
 
             if slot['is_online']:
-                location = "Online (Zoom)"
+                location = "Online"
             else:
-                location = f"{slot['building']}\nRoom: {slot['room']}".strip()
+                location = slot['building']
 
             if show_location and location not in ("", "Unknown"):
                 label = f"{course}\n{slot['prof']}\n{location}"
