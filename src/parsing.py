@@ -48,7 +48,7 @@ def parse_input(wanted_courses, term):
                 continue
             seen_courses.add(course_key)
             
-            has_number = bool(re.search(r'\d', section))
+            has_number = bool(re.search(r'\d', section)) or section.endswith('T')
             
             parts = line.split('\t')
             prof_name = "Unknown"
