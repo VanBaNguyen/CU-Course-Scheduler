@@ -5,5 +5,3 @@ tqdm>=4.62.0
 pytest>=6.2.5
 requests
 beautifulsoup4
-PyGithub
-flask
