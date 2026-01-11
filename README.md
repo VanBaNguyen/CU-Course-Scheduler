@@ -1,58 +1,53 @@
-## CU Course‑Schedule Optimizer
+# CU Course Schedule Optimizer
 
-Python Program that takes CU timetable data and creates the most efficient timetable possible.
+Fetches course data from Carleton Central and generates optimal conflict-free schedules.
 
-~~~bash
-pip install matplotlib
-python schedule_opt.py
-~~~
+## Setup
 
-### What it does
+```bash
+pip install -r requirements.txt
+```
 
-1. **Read your raw term file** (`fall.txt`, `winter.txt`, `summer.txt`).  
-2. **Keep just the courses you list** in the `COURSES = {...}` set.  
-3. **Pair every lecture with the right tutorial/lab** (or skip if none).  
-4. **Test every combination** for time clashes and throw the bad ones out.  
-5. **Score each clash‑free schedule**  
-   * fewer campus days  
-   * shorter gaps  
-   * no 8 a.m. misery  
-   * (optionally) avoid named people  
-6. **Rank & print the top 3** plus one fully drawn timetable.
+## Usage
 
-
-### Example Schedule
+Edit `src/main.py`:
 
 ```python
-COURSES = {"COMP 3007", "COMP 3000", "COMP 3004", "COMP 3804"}
-TERM_FILE = winter
+COURSES = {"COMP 3000", "COMP 2406", "COMP 2108", "COMP 2109"}
+EXCLUDE_PROFS = {""}
+TERM = "202610"  # 10=winter, 20=summer, 30=fall
+SHOW_LOCATION = True
+DARK_MODE = False
 ```
+
+Run:
+
+```bash
+python src/main.py
+```
+
+This will:
+1. Fetch course data from Carleton Central
+2. Save to `terms/winter.txt` (or summer/fall based on term)
+3. Generate top 3 optimal schedules as images in `schedules/`
+
+## Scoring
+
+Lower score = better schedule:
+- 1000 points per campus day
+- 1 point per minute of gaps between classes
+- 20 point penalty for classes before 9am
+
+## Example
 
 <img src="assets/schedule1_3450.png" alt="example-schedule" width="750"/>
 
-The score of this schedule is 3450 (3000- for number of days, 450 for the gap between classes, lower score is better). The score is in the file name.
+Score 3450 = 3 days (3000) + 450 min gaps
 
-### Features
+## Options
 
-| Feature | How to use |
-|---------|------------|
-| **Dark‑mode plot** | `DARK_MODE = True` |
-| **Hide / show room & building** | `SHOW_LOCATION = False` |
-| Subtle dotted grid above blocks | default in dark mode |
-| Handles online / unknown‑time classes gracefully | automatic |
-
-### Other Things
-* Supports classes until **22:00**.    
-* Colour‑coded blocks, readable text labels.  
-* Tweaks are just booleans at the bottom of the script.  
-
-### Quick start
-
-Open **`schedule_opt.py`**, scroll to the bottom and edit:
-
-~~~python
-COURSES       = {"COMP 1234", "MATH 1010", "BUSI 2020"}
-TERM_FILE     = winter          # fall / winter / summer
-SHOW_LOCATION = True
-DARK_MODE     = False
-~~~
+| Option | Description |
+|--------|-------------|
+| `EXCLUDE_PROFS` | Set of professor names to avoid |
+| `SHOW_LOCATION` | Show building on schedule plot |
+| `DARK_MODE` | Dark theme for plots |
