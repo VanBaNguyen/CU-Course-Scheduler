@@ -180,3 +180,4 @@ lib/
 share/
 pyvenv.cfg
 schedules/
+void/

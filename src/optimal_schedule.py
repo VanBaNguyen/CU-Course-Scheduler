@@ -92,7 +92,7 @@ def build_slots(course_list):
             if start is None or end is None:
                 # bad clock format → skip *unless* it’s ON-LINE async
                 if not is_online:                      # offline garbage
-                    print(f"⚠️  Skipping invalid time: {time_trim}"
+                    print(f"Skipping invalid time: {time_trim}"
                           f" (Course: {course_code} {section})")
                     continue
                 start, end = None, None
@@ -354,7 +354,7 @@ def plot_schedule(schedule, *, show_location=True, dark_mode=False, outfile=None
         outfile_path = os.path.join(save_dir, outfile_rel)
         os.makedirs(os.path.dirname(outfile_path), exist_ok=True)
         fig.savefig(outfile_path, dpi=300, bbox_inches="tight")
-        print(f"✅  Saved   {outfile_path}")
+        print(f"Saved {outfile_path}")
 
 
     plt.show()
@@ -383,7 +383,7 @@ def optimize_schedule(course_list, *, show_location=True, dark_mode=False):
     ts           = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir_rel  = os.path.join("schedules", ts)
     run_dir_abs  = os.path.join(root_dir_abs, ts)
-    print(f"\n📂  Saving plots in {run_dir_abs}\n")
+    print(f"\nSaving plots in {run_dir_abs}\n")
 
     # plot & save the 3 best schedules
     for idx, (score, sched) in enumerate(scored[:3], start=1):
@@ -394,29 +394,5 @@ def optimize_schedule(course_list, *, show_location=True, dark_mode=False):
                       dark_mode=dark_mode,
                       outfile=outfile)
 
-EXCLUDE_PROFS = {}
-
-# basically a legacy variable but I don't want the code to break so don't delete
+EXCLUDE_PROFS = set()
 AVOID_PROFS = EXCLUDE_PROFS
-
-if __name__ == "__main__":
-    fall   = "fall.txt"
-    winter = "winter.txt"
-    summer = "summer.txt"
-
-    # ────────────────────────────────────────────────────────────────
-    # INPUT/ADJUSTMENTSß
-    # ----------------------------------------------------------------
-
-    COURSES = {""}
-    TERM_FILE      = fall
-    SHOW_LOCATION  = True        # ← set False to hide building + room
-    DARK_MODE      = False
-    # ────────────────────────────────────────────────────────────────
-
-    courses = parse_input(COURSES, TERM_FILE)
-    optimize_schedule(courses,
-                      show_location=SHOW_LOCATION,
-                      dark_mode=DARK_MODE)
-
-# User Input Fields: Courses, Prof Exclusions, Summer/Fall/Winter term, Show Location (y/n), Dark Mode (y/n)
