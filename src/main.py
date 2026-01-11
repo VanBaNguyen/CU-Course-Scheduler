@@ -1,7 +1,8 @@
 import re
-from search_by_number import search_by_course_number, get_term_filepath, create_session
+from search_by_number import search_by_course_number, create_session
 from optimal_schedule import optimize_schedule
-from parsing import parse_input
+from parsing import parse_input_from_db
+from database import init_db, course_exists, save_course, get_all_courses_for_term
 
 # ────────────────────────────────────────────────────────────────
 # INPUT/ADJUSTMENTS
@@ -20,65 +21,45 @@ DARK_MODE = False
 # ────────────────────────────────────────────────────────────────
 
 
-def get_term_filename(term):
-    """Get just the filename based on term code."""
-    suffix = term[-2:]
-    if suffix == "10":
-        return "winter.txt"
-    elif suffix == "20":
-        return "summer.txt"
-    elif suffix == "30":
-        return "fall.txt"
-    return f"term_{term}.txt"
-
-
-def get_term_filepath(term):
-    """Get full filepath based on term code."""
-    import os
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(script_dir)
-    return os.path.join(project_root, "terms", get_term_filename(term))
-
-
 def fetch_courses():
-    """Fetch course data from Carleton Central and save to term file."""
+    """Fetch course data from Carleton Central and save to database."""
     course_numbers = [re.search(r'\d+', c).group() for c in COURSES if re.search(r'\d+', c)]
-    print(f"Fetching course numbers: {course_numbers}")
     
-    filepath = get_term_filepath(TERM)
+    # Check which courses need fetching
+    to_fetch = [num for num in course_numbers if not course_exists(TERM, num)]
     
-    # Create a single session for all searches
+    if not to_fetch:
+        print("All course data already cached")
+        return
+    
+    print(f"Fetching course numbers: {to_fetch}")
+    
     session, sess_id = create_session(TERM)
     if session is None:
         print("Failed to create session")
         return
     
-    with open(filepath, "w") as f:
-        f.write("")
-    
-    for course_num in course_numbers:
-        print(f"\nFetching {course_num}...")
+    for course_num in to_fetch:
+        print(f"Fetching {course_num}...")
         result = search_by_course_number(course_num, TERM, session, sess_id)
         if result:
-            with open(filepath, "a") as f:
-                f.write(result + "\n")
+            save_course(TERM, course_num, result)
             print(f"{course_num} done")
         else:
             print(f"{course_num} failed")
-    
-    print(f"\nSaved to {filepath}")
 
 
 def generate_schedule():
-    """Parse saved course data and generate optimal schedule."""
+    """Parse course data from database and generate optimal schedule."""
     import optimal_schedule as opt
     opt.EXCLUDE_PROFS = EXCLUDE_PROFS
     
-    term_file = get_term_filename(TERM)
-    courses = parse_input(COURSES, term_file)
+    course_numbers = [re.search(r'\d+', c).group() for c in COURSES if re.search(r'\d+', c)]
+    courses = parse_input_from_db(COURSES, TERM, course_numbers)
     optimize_schedule(courses, show_location=SHOW_LOCATION, dark_mode=DARK_MODE)
 
 
 if __name__ == "__main__":
+    init_db()
     fetch_courses()
     generate_schedule()

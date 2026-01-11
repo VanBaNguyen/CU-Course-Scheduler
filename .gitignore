@@ -173,11 +173,5 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-input.txt
-fall.txt
-winter.txt
-lib/
-share/
-pyvenv.cfg
 schedules/
-void/
+courses.db

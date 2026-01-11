@@ -7,7 +7,6 @@ from collections import defaultdict
 from datetime import datetime, time
 from itertools import combinations
 from itertools import product
-from parsing import parse_input
 matplotlib.use("Agg") # Use non-interactive backend for plotting
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]

@@ -1,30 +1,30 @@
-import os
 import re
 from pprint import pprint
+from database import get_course
 
-def parse_input(wanted_courses, term):
+
+def parse_input_from_db(wanted_courses, term, course_numbers):
     """
-    Parse course data from term file.
+    Parse course data from database.
     Returns list of: [has_number, course_code, section, prof, days, time, building]
     """
+    all_lines = []
+    for num in course_numbers:
+        data = get_course(term, num)
+        if data:
+            all_lines.extend(data.split('\n'))
+    
+    return parse_lines(wanted_courses, all_lines)
+
+
+def parse_lines(wanted_courses, lines):
+    """Parse course data from lines."""
     structured_results = []
     seen_courses = set()
 
-    # Locate the term file
-    src_dir = os.path.dirname(os.path.abspath(__file__))
-    project = os.path.dirname(src_dir)
-    terms_dir = os.path.join(project, "terms")
-    file_path = os.path.join(terms_dir, term)
-
-    if not os.path.isfile(file_path):
-        raise FileNotFoundError(f"Cannot find term file: {file_path}")
-
-    with open(file_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
-
     i = 0
     while i < len(lines):
-        line = lines[i].strip()
+        line = lines[i].strip() if isinstance(lines[i], str) else lines[i]
         
         if not line:
             i += 1
@@ -65,7 +65,7 @@ def parse_input(wanted_courses, term):
             building = "Unknown"
             
             for j in range(i, min(i + 4, len(lines))):
-                next_line = lines[j].strip()
+                next_line = lines[j].strip() if isinstance(lines[j], str) else lines[j]
                 if 'Meeting Date:' in next_line or 'Days:' in next_line:
                     days_match = re.search(r'Days:\s*([A-Za-z ]*?)\s*Time:', next_line)
                     time_match = re.search(r'Time:\s*([\d:\- ]+)', next_line)

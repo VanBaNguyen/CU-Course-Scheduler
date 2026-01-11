@@ -1,12 +1,9 @@
 import requests
 import time
 import re
-import os
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://central.carleton.ca/prod"
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -54,7 +51,7 @@ def create_session(term):
 def search_by_course_number(course_number, term, session=None, sess_id=None):
     """
     Search for a course by course number.
-    Returns formatted course data matching winter.txt format.
+    Returns formatted course data.
     """
     try:
         # Create session if not provided
@@ -99,7 +96,7 @@ def search_by_course_number(course_number, term, session=None, sess_id=None):
 
 
 def parse_course_data(html):
-    """Parse HTML and extract course data in the winter.txt format."""
+    """Parse HTML and extract course data."""
     soup = BeautifulSoup(html, "html.parser")
     lines = []
     seen = set()
@@ -134,17 +131,3 @@ def parse_course_data(html):
                 lines.append(line)
     
     return '\n'.join(lines) if lines else None
-
-
-def get_term_filepath(term):
-    """Get filepath based on term code's last two digits."""
-    suffix = term[-2:]
-    if suffix == "10":
-        name = "winter.txt"
-    elif suffix == "20":
-        name = "summer.txt"
-    elif suffix == "30":
-        name = "fall.txt"
-    else:
-        name = f"term_{term}.txt"
-    return os.path.join(PROJECT_ROOT, "terms", name)

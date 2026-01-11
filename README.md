@@ -27,8 +27,8 @@ python src/main.py
 ```
 
 This will:
-1. Fetch course data from Carleton Central
-2. Save to `terms/winter.txt` (or summer/fall based on term)
+1. Fetch course data from Carleton Central (skips if already cached)
+2. Store data in SQLite database (`courses.db`)
 3. Generate top 3 optimal schedules as images in `schedules/`
 
 ## Scoring
